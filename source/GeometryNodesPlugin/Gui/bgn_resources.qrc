@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>bgn/icon_lock_off.png</file>
+        <file>bgn/icon_lock_on.png</file>
+        <file>bgn/icon_update.png</file>
+        <file>bgn/anim_update.gif</file>
+    </qresource>
+</RCC>
