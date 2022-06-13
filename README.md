@@ -23,7 +23,7 @@ https://youtu.be/irP0aW7qyJA
 
 ## Install
 
-**Download here: [v0.0.1-alpha](/releases)**
+**Download here: [v0.0.1](https://github.com/thomalex0/unigine-geometry-nodes/releases/latest)**
 
 You only need to place the content of the `bin` folder of this repo to the `bin` folder of your project based on UNIGINE 2.15.1.
 
