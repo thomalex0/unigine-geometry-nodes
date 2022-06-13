@@ -11,6 +11,8 @@
 !bin/editor
 !bin/editor_debug
 
+!/assets
+
 !/source
 /source/*
 !/source/cmake
