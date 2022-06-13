@@ -1,10 +1,10 @@
-# Geometry Nodes Plugin
+# Geometry Nodes Plugin for UNIGINE
 
 **WORK-IN-PROGRESS**
 
-[![Server API Coverage](https://img.shields.io/badge/UNIGINE-2.15.1-green.svg)](https://developer.unigine.com/en/docs/2.15.1/)
+[![UNIGINE 2.15.1](https://img.shields.io/badge/UNIGINE-2.15.1-green.svg)](https://developer.unigine.com/en/docs/2.15.1/)
 
-![](/assets/title.jpg)
+![Geometry Nodes Plugin](/assets/title.jpg)
 
 A proof of concept for a plugin for [UNIGINE Editor](https://unigine.com/get-unigine/) utilizing Blender Geometry Nodes functionality for procedural geometry.
 
@@ -23,7 +23,7 @@ https://youtu.be/irP0aW7qyJA
 
 ## Install
 
-**Download here: [v0.0.1-alpha](/assets/release)**
+**Download here: [v0.0.1-alpha](/releases)**
 
 You only need to place the content of the `bin` folder of this repo to the `bin` folder of your project based on UNIGINE 2.15.1.
 
