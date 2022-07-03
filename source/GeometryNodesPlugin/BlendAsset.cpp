@@ -12,10 +12,13 @@
 
 using namespace Unigine;
 
+
 namespace GeometryNodes
 {
 
-	void BlendAsset::init()
+	REGISTER_COMPONENT(BlendAsset)
+
+		void BlendAsset::init()
 	{
 		World::addCallback(World::CALLBACK_PRE_WORLD_SAVE, MakeCallback(this, &BlendAsset::saveTemporaryMeshes));
 
@@ -33,11 +36,22 @@ namespace GeometryNodes
 
 	void BlendAsset::shutdown()
 	{
+		Log::message("component shutdown\n");
 		World::clearCallbacks(World::CALLBACK_PRE_WORLD_SAVE);
 		PropertyPtr prop = getProperty();
 		prop->clearCallbacks(Property::CALLBACK_PARAMETER_CHANGED);
 		saveData("temp_meshes", QJsonArray());
 		cleanup(false);
+	}
+
+	void BlendAsset::on_enable()
+	{
+		Log::message("component enabled\n");
+	}
+
+	void BlendAsset::on_disable()
+	{
+		Log::message("component disabled\n");
 	}
 
 	void BlendAsset::update()
@@ -178,7 +192,7 @@ namespace GeometryNodes
 			{
 				process->request("exit");
 
-				if (!process->waitForFinished(1000))
+				if (!process->waitForFinished(100))
 				{
 					process->kill();
 					//Log::message("force killed\n");
@@ -441,19 +455,83 @@ namespace GeometryNodes
 		{
 			auto& ins = data.instances[i];
 
-			NodePtr instance_node;
+			ClusterUpdateParams* params = nullptr;
+			if (update_existing && i < instance_objects.size())
+			{
+				params = &instance_objects.get(i).get();
+			}
 
-			bool isExternal = update_existing && i < instance_objects.size() && !instance_objects.get(i).get().node.isEmpty();
+			bool isExternal = false;
+			int action = 0;
+
+			if (params)
+			{
+				action = params->action.get();
+				switch (action)
+				{
+				case 0:
+				case 1: isExternal = !params->node.isEmpty(); break;
+				case 2: isExternal = !params->node_asset.nullCheck(); break;
+				}
+			}
+
+			NodePtr instance_node;
 
 			if (isExternal)
 			{
-				instance_node = instance_objects.get(i).get().node.get();
 				if (instances.contains(ins.hash))
 				{
 					if (!instances.get(ins.hash).isNull()) {
 						instances.get(ins.hash)->deleteLater();
 					}
 					instances.remove(ins.hash);
+				}
+				if (action < 2)
+				{
+					instance_node = params->node.get();
+					if (action == 1)
+					{
+						// clone nodes
+						NodeDummyPtr group = NodeDummy::create();
+						group->setParent(node);
+						group->setTransform(Math::mat4_identity);
+						group->setName(instance_node->getName());
+
+						for (int im = 0; im < ins.matrices.size(); im++)
+						{
+							NodePtr nd = instance_node->clone();
+							nd->setParent(group);
+							nd->setTransform(ins.matrices[im]);
+						}
+						group->setShowInEditorEnabledRecursive(true);
+						group->setSaveToWorldEnabledRecursive(true);
+						instances.append(ins.hash, group);
+						return;
+					}
+				}
+				else
+				{
+					// noderefs
+					UGUID guid = params->node_asset.getParameter()->getValueGUID();
+					UGUID asset_guid = FileSystemAssets::resolveAsset(guid);
+					String name = FileSystem::getVirtualPath(asset_guid).filename();
+
+					NodeDummyPtr group = NodeDummy::create();
+					group->setParent(node);
+					group->setTransform(Math::mat4_identity);
+					group->setName(name.get());
+
+					for (int im = 0; im < ins.matrices.size(); im++)
+					{
+						NodeReferencePtr nr = NodeReference::create(guid);
+						nr->setParent(group);
+						nr->setTransform(ins.matrices[im]);
+						nr->setName(name.get());
+					}
+					group->setShowInEditorEnabledRecursive(true);
+					group->setSaveToWorldEnabledRecursive(true);
+					instances.append(ins.hash, group);
+					return;
 				}
 			}
 			else
@@ -478,7 +556,7 @@ namespace GeometryNodes
 			{
 				if (isExternal)
 				{
-					if (instance_objects.get(i).get().replace_mesh.get())
+					if (params->replace_mesh.get())
 					{
 						setMesh(instance_node, generateMesh(ins.mesh));
 

@@ -29,16 +29,18 @@ namespace GeometryNodes
 			PROP_PARAM(Toggle, dynamic_instances, false, "", "Enable if your instances have changing geometry (slow)", "Settings")
 			PROP_PARAM(Toggle, synchronous, false, "", "Enable to wait for each geometry update (useful for videograbbing).\nDrops performance a lot (especially for animation).", "Settings")
 
-			PROP_PARAM(Toggle, update_existing, false, "", "", "Output")
-			PROP_PARAM(Node, mesh_update_object, "Mesh Node", "", "Output", "update_existing=1")
+			PROP_PARAM(Toggle, update_existing, false, "Advanced", "", "Output")
+			PROP_PARAM(Node, mesh_update_object, "Mesh Output Node", "", "Output", "update_existing=1")
 			PROP_PARAM(Switch, save_mesh, 0, "Create New Mesh Asset,Overwrite Used Mesh Asset", "", "", "Output", "update_existing=1")
 
 		struct ClusterUpdateParams : public Unigine::ComponentStruct
 		{
-			PROP_PARAM(Node, node)
-			PROP_PARAM(Toggle, replace_transforms, true)
-			PROP_PARAM(Toggle, replace_mesh, false)
-			PROP_PARAM(Switch, save_mesh, 0, "Create New Mesh Asset,Overwrite Used Mesh Asset", "", "", "", "replace_mesh=1")
+			PROP_PARAM(Switch, action, 0, "Update Node,Clone Node,Spawn Node References")
+			PROP_PARAM(Node, node, "", "", "", "action=0,1")
+			PROP_PARAM(Toggle, replace_transforms, true, "", "", "", "action=0")
+			PROP_PARAM(Toggle, replace_mesh, false, "", "", "", "action=0")
+			PROP_PARAM(Switch, save_mesh, 0, "Create New Mesh Asset,Overwrite Used Mesh Asset", "", "", "", "replace_mesh=1;action=0")
+			PROP_PARAM(File, node_asset, "", "", "", "", "action=2;filter=.node")
 		};
 			PROP_ARRAY_STRUCT(ClusterUpdateParams, instance_objects, "Instances", "", "Output", "update_existing=1")
 
@@ -54,10 +56,13 @@ namespace GeometryNodes
 		void init();
 		void update();
 
+		void on_enable() override;
+		void on_disable() override;
+
 	private:
 		BlenderProcess *process{};
 		Unigine::ObjectMeshStaticPtr mesh;
-		Unigine::HashMap<long long, Unigine::ObjectMeshClusterPtr> instances;
+		Unigine::HashMap<long long, Unigine::NodePtr> instances;
 		Unigine::Vector<Unigine::UGUID> temporaryMeshes;
 
 		int frame{ 1 };

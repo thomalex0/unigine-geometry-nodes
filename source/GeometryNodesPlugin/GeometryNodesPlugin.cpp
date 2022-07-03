@@ -10,6 +10,7 @@
 #include <editor/WindowManager.h>
 //#include <editor/PluginManager.h>
 #include <editor/SettingManager.h>
+#include <editor/Undo.h>
 //
 #include <QMenu>
 //#include <QCoreApplication>
@@ -29,9 +30,10 @@ namespace GeometryNodes
 
 	QString GeometryNodesPlugin::getPythonPath()
 	{
-		QDir dir = QFileInfo(pluginPath_).dir();
+		/*QDir dir = QFileInfo(pluginPath_).dir();
 		auto pypath = dir.absolutePath() + "/geonodes.py";
-		return pypath;
+		return pypath;*/
+		return tr("D:/Unigine projects/BGN/source/GeometryNodesPlugin/geonodes.py");
 	}
 
 	bool GeometryNodesPlugin::init()
@@ -51,13 +53,14 @@ namespace GeometryNodes
 		});
 
 		Unigine::ComponentSystem::get()->initialize();
-		Unigine::ComponentSystem::get()->registerComponent<BlendAsset>();
 
 		return true;
 	}
 
 	void GeometryNodesPlugin::shutdown()
 	{
+
+		//Editor::Undo::reset();
 		// manually shutting down all components
 		// strange but otherwise callbacks aren't cleared and editor crashes on exit
 		// it may make sense to create a registry for all callback subscriptions for all components
@@ -77,8 +80,6 @@ namespace GeometryNodes
 		Unigine::Console::removeCommand(BLENDER_FIND_CMD);
 		Unigine::Console::removeCommand(TRACK_TRANSFORM_CMD);
 
-		Unigine::ComponentSystem::get()->unregisterComponent<BlendAsset>();
-
 		disconnect(Editor::WindowManager::instance(), nullptr, this, nullptr);
 
 		delete action_;
@@ -87,6 +88,8 @@ namespace GeometryNodes
 		destroy_window();
 		delete instance_;
 		instance_ = nullptr;
+
+		//Editor::Undo::reset();
 	}
 
 	void GeometryNodesPlugin::setup_config()

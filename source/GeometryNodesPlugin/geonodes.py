@@ -178,7 +178,15 @@ def getMeshData(mesh):
 	mesh.loops.foreach_get('normal', normals)
 
 	# uvs
-	if len(mesh.uv_layers) > 0:
+	attr_uv0 = mesh.attributes.get('UV0')
+	if attr_uv0 and attr_uv0.domain == 'CORNER' and len(attr_uv0.data) > 0 and len(attr_uv0.data[0].vector) == 3:
+		uv0 = np.empty(n_loops * 3, dtype=np.float32)
+		attr_uv0.data.foreach_get('vector', uv0)
+		uv0 = uv0.reshape(-1,3)
+		uv0 = np.delete(uv0, 2, 1)
+		uv0 = uv0.reshape(-1)
+		uv0_bytes = uv0.tobytes()
+	elif len(mesh.uv_layers) > 0:
 		uv0_bytes = bytes(n_loops * 2 * 4)
 		uv0 = np.ndarray(n_loops * 2, buffer=uv0_bytes, dtype='<f')
 		mesh.uv_layers[0].data.foreach_get('uv', uv0)
@@ -186,7 +194,15 @@ def getMeshData(mesh):
 		uv0 = np.array([])
 		uv0_bytes = bytes()
 
-	if len(mesh.uv_layers) > 1:
+	attr_uv1 = mesh.attributes.get('UV1')
+	if attr_uv1 and attr_uv1.domain == 'CORNER' and len(attr_uv1.data) > 0 and len(attr_uv1.data[0].vector) == 3:
+		uv1 = np.empty(n_loops * 3, dtype=np.float32)
+		attr_uv1.data.foreach_get('vector', uv1)
+		uv1 = uv1.reshape(-1,3)
+		uv1 = np.delete(uv1, 2, 1)
+		uv1 = uv1.reshape(-1)
+		uv1_bytes = uv1.tobytes()
+	elif len(mesh.uv_layers) > 1:
 		uv1_bytes = bytes(n_loops * 2 * 4)
 		uv1 = np.ndarray(n_loops * 2, buffer=uv1_bytes, dtype='<f')
 		mesh.uv_layers[1].data.foreach_get('uv', uv1)
