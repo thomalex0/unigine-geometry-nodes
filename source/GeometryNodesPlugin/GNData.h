@@ -170,11 +170,31 @@ namespace GeometryNodes
 		Unigine::Math::vec3 endTangent;
 	};
 
+	struct GNInputSplinePointData
+	{
+		Unigine::Math::vec3 pos;
+		Unigine::Math::vec3 startTangent;
+		Unigine::Math::vec3 endTangent;
+	};
+
+	struct GNInputSplineData
+	{
+		Unigine::Vector<GNInputSplinePointData> points;
+	};
+
+	struct GNInputCurveData
+	{
+		Unigine::String name;
+		Unigine::Math::mat4 transform;
+		Unigine::Vector<GNInputSplineData> splines;
+	};
+
 	struct GNData
 	{
 		Unigine::Math::mat4 transform;
 		GNMeshData mesh;
 		Unigine::Vector<GNInstanceData> instances;
+		Unigine::Vector<GNInputCurveData> curves;
 		Unigine::Vector<GNCurveData> segments;
 	};
 
@@ -1082,10 +1102,33 @@ namespace GeometryNodes
 		return in;
 	}
 
+	inline QDataStream& operator>>(QDataStream& in, GNInputSplinePointData& ins)
+	{
+		in >> ins.pos;
+		in >> ins.startTangent;
+		in >> ins.endTangent;
+		return in;
+	}
+
+	inline QDataStream& operator>>(QDataStream& in, GNInputSplineData& ins)
+	{
+		in >> ins.points;
+		return in;
+	}
+
+	inline QDataStream& operator>>(QDataStream& in, GNInputCurveData& ins)
+	{
+		in >> ins.name;
+		in >> ins.transform;
+		in >> ins.splines;
+		return in;
+	}
+
 	inline QDataStream& operator>>(QDataStream& in, GNData& data)
 	{
 		in >> data.transform;
 		in >> data.mesh;
+		//in >> data.curves;
 		in >> data.instances;
 		return in;
 	}

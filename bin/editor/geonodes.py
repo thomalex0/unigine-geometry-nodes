@@ -178,7 +178,15 @@ def getMeshData(mesh):
 	mesh.loops.foreach_get('normal', normals)
 
 	# uvs
-	if len(mesh.uv_layers) > 0:
+	attr_uv0 = mesh.attributes.get('UV0')
+	if attr_uv0 and attr_uv0.domain == 'CORNER' and len(attr_uv0.data) > 0 and len(attr_uv0.data[0].vector) == 3:
+		uv0 = np.empty(n_loops * 3, dtype=np.float32)
+		attr_uv0.data.foreach_get('vector', uv0)
+		uv0 = uv0.reshape(-1,3)
+		uv0 = np.delete(uv0, 2, 1)
+		uv0 = uv0.reshape(-1)
+		uv0_bytes = uv0.tobytes()
+	elif len(mesh.uv_layers) > 0:
 		uv0_bytes = bytes(n_loops * 2 * 4)
 		uv0 = np.ndarray(n_loops * 2, buffer=uv0_bytes, dtype='<f')
 		mesh.uv_layers[0].data.foreach_get('uv', uv0)
@@ -186,7 +194,15 @@ def getMeshData(mesh):
 		uv0 = np.array([])
 		uv0_bytes = bytes()
 
-	if len(mesh.uv_layers) > 1:
+	attr_uv1 = mesh.attributes.get('UV1')
+	if attr_uv1 and attr_uv1.domain == 'CORNER' and len(attr_uv1.data) > 0 and len(attr_uv1.data[0].vector) == 3:
+		uv1 = np.empty(n_loops * 3, dtype=np.float32)
+		attr_uv1.data.foreach_get('vector', uv1)
+		uv1 = uv1.reshape(-1,3)
+		uv1 = np.delete(uv1, 2, 1)
+		uv1 = uv1.reshape(-1)
+		uv1_bytes = uv1.tobytes()
+	elif len(mesh.uv_layers) > 1:
 		uv1_bytes = bytes(n_loops * 2 * 4)
 		uv1 = np.ndarray(n_loops * 2, buffer=uv1_bytes, dtype='<f')
 		mesh.uv_layers[1].data.foreach_get('uv', uv1)
@@ -244,12 +260,31 @@ def getInstanceData(hsh, mesh, matrices, is_known = False):
 	data = bytearray()
 	data += pack('<q', hsh)
 	data += pack('<I', len(matrices))
+	# print('matrices',len(matrices),flush=True)
 	for mat in matrices:
 		matrix:np.ndarray = np.array(mat, dtype='<f').reshape(4,4)
 		data += matrix.transpose().tobytes()
 	data += pack('?', not is_known)
 	if not is_known:
 		data += getMeshData(mesh)
+	return data
+
+def getCurveData(c:bpy.types.Curve, mat):
+	data = bytearray()
+	data.extend(packString(c.name))
+
+	matrix:np.ndarray = np.array(mat, dtype='<f').reshape(4,4)
+	data.extend(matrix.transpose().tobytes())
+
+	data.extend(pack('<I', len(c.splines)))
+	# print("numsplines ", c.splines, flush=True)
+	for spline in c.splines:
+		data.extend(pack('<I', len(spline.bezier_points)))
+		# print("numpoints ", len(c.splines), flush=True)
+		for p in spline.bezier_points:
+			data.extend(pack('<3f', *p.co))
+			data.extend(pack('<3f', *p.handle_left))
+			data.extend(pack('<3f', *p.handle_right))
 	return data
 
 def exportGeometryData(geoObj, known_hashes = []):
@@ -264,28 +299,45 @@ def exportGeometryData(geoObj, known_hashes = []):
 	geometry_bytes.extend(matrix.tobytes())
 
 	# Write main mesh
+	# print("mesh" if evaluated_obj.type == 'MESH' else "curve", flush=True)
 	md = getMeshData(evaluated_obj.data) if evaluated_obj.type == 'MESH' else pack('<?', False)
 	geometry_bytes.extend(md)
 
 	mesh_hashes = []
 	mesh_objects = []
 	instance_matrices = []
+	# curves_data = []
+	# curves_matrices = []
 
 	# Get instances and their meshes
 	for instance in depsgraph.object_instances:
-		if instance.instance_object and instance.object.type == 'MESH' and instance.parent and instance.parent.original == geoObj:
-			hsh = hash(instance.object.original.data)
-			if hsh not in mesh_hashes:
-				mesh_hashes.append(hsh)
-				mesh_objects.append(instance.object.data)
-				instance_matrices.append([instance.matrix_world.copy()])
-			else:
-				instance_matrices[mesh_hashes.index(hsh)].append(instance.matrix_world.copy())
+		if instance.instance_object and instance.parent and instance.parent.original == geoObj:
+			if instance.object.type == 'MESH':
+				# print("mesh instance", flush=True)
+				hsh = hash(instance.object.data)
+				if hsh not in mesh_hashes:
+					mesh_hashes.append(hsh)
+					mesh_objects.append(instance.object.data)
+					instance_matrices.append([instance.matrix_world.copy()])
+				else:
+					instance_matrices[mesh_hashes.index(hsh)].append(instance.matrix_world.copy())
+			# elif instance.object.type == 'CURVE':
+			# 	# print("curve instance", flush=True)
+			# 	curves_data.append(instance.object.data)
+			# 	curves_matrices.append(instance.matrix_world.copy())
+	
+	# Write curves
+	# geometry_bytes.extend(pack('<I', len(curves_data)))
+	# for curve, mat in zip(curves_data, curves_matrices):
+	# 	geometry_bytes.extend(getCurveData(curve, mat))
 
 	# Write Instances
 	geometry_bytes.extend(pack('<I', len(mesh_objects)))
 	for hsh, mesh, matrices in zip(mesh_hashes, mesh_objects, instance_matrices):
 		geometry_bytes.extend(getInstanceData(hsh, mesh, matrices, hsh in known_hashes))
+
+	# if len(instance_matrices)>0:
+		# print("matrices",len(instance_matrices[0]), flush=True)
 
 	return geometry_bytes
 

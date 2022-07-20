@@ -36,6 +36,9 @@ namespace GeometryNodes
 		void paramsUpdated(BlendAsset* comp);
 		void meshUpdated();
 
+	public slots:
+		void onAssetChanged(Unigine::UGUID guid);
+
 	private:
 		void setup_config();
 		void create_window();

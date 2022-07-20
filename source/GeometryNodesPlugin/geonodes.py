@@ -260,12 +260,31 @@ def getInstanceData(hsh, mesh, matrices, is_known = False):
 	data = bytearray()
 	data += pack('<q', hsh)
 	data += pack('<I', len(matrices))
+	# print('matrices',len(matrices),flush=True)
 	for mat in matrices:
 		matrix:np.ndarray = np.array(mat, dtype='<f').reshape(4,4)
 		data += matrix.transpose().tobytes()
 	data += pack('?', not is_known)
 	if not is_known:
 		data += getMeshData(mesh)
+	return data
+
+def getCurveData(c:bpy.types.Curve, mat):
+	data = bytearray()
+	data.extend(packString(c.name))
+
+	matrix:np.ndarray = np.array(mat, dtype='<f').reshape(4,4)
+	data.extend(matrix.transpose().tobytes())
+
+	data.extend(pack('<I', len(c.splines)))
+	# print("numsplines ", c.splines, flush=True)
+	for spline in c.splines:
+		data.extend(pack('<I', len(spline.bezier_points)))
+		# print("numpoints ", len(c.splines), flush=True)
+		for p in spline.bezier_points:
+			data.extend(pack('<3f', *p.co))
+			data.extend(pack('<3f', *p.handle_left))
+			data.extend(pack('<3f', *p.handle_right))
 	return data
 
 def exportGeometryData(geoObj, known_hashes = []):
@@ -280,28 +299,45 @@ def exportGeometryData(geoObj, known_hashes = []):
 	geometry_bytes.extend(matrix.tobytes())
 
 	# Write main mesh
+	# print("mesh" if evaluated_obj.type == 'MESH' else "curve", flush=True)
 	md = getMeshData(evaluated_obj.data) if evaluated_obj.type == 'MESH' else pack('<?', False)
 	geometry_bytes.extend(md)
 
 	mesh_hashes = []
 	mesh_objects = []
 	instance_matrices = []
+	# curves_data = []
+	# curves_matrices = []
 
 	# Get instances and their meshes
 	for instance in depsgraph.object_instances:
-		if instance.instance_object and instance.object.type == 'MESH' and instance.parent and instance.parent.original == geoObj:
-			hsh = hash(instance.object.original.data)
-			if hsh not in mesh_hashes:
-				mesh_hashes.append(hsh)
-				mesh_objects.append(instance.object.data)
-				instance_matrices.append([instance.matrix_world.copy()])
-			else:
-				instance_matrices[mesh_hashes.index(hsh)].append(instance.matrix_world.copy())
+		if instance.instance_object and instance.parent and instance.parent.original == geoObj:
+			if instance.object.type == 'MESH':
+				# print("mesh instance", flush=True)
+				hsh = hash(instance.object.data)
+				if hsh not in mesh_hashes:
+					mesh_hashes.append(hsh)
+					mesh_objects.append(instance.object.data)
+					instance_matrices.append([instance.matrix_world.copy()])
+				else:
+					instance_matrices[mesh_hashes.index(hsh)].append(instance.matrix_world.copy())
+			# elif instance.object.type == 'CURVE':
+			# 	# print("curve instance", flush=True)
+			# 	curves_data.append(instance.object.data)
+			# 	curves_matrices.append(instance.matrix_world.copy())
+	
+	# Write curves
+	# geometry_bytes.extend(pack('<I', len(curves_data)))
+	# for curve, mat in zip(curves_data, curves_matrices):
+	# 	geometry_bytes.extend(getCurveData(curve, mat))
 
 	# Write Instances
 	geometry_bytes.extend(pack('<I', len(mesh_objects)))
 	for hsh, mesh, matrices in zip(mesh_hashes, mesh_objects, instance_matrices):
 		geometry_bytes.extend(getInstanceData(hsh, mesh, matrices, hsh in known_hashes))
+
+	# if len(instance_matrices)>0:
+		# print("matrices",len(instance_matrices[0]), flush=True)
 
 	return geometry_bytes
 

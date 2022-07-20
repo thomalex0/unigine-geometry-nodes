@@ -7,6 +7,7 @@
 #include <editor/Constants.h>
 //#include <editor/Selection.h>
 //#include <editor/Selector.h>
+#include <editor/AssetManager.h>
 #include <editor/WindowManager.h>
 //#include <editor/PluginManager.h>
 #include <editor/SettingManager.h>
@@ -30,10 +31,10 @@ namespace GeometryNodes
 
 	QString GeometryNodesPlugin::getPythonPath()
 	{
-		/*QDir dir = QFileInfo(pluginPath_).dir();
+		QDir dir = QFileInfo(pluginPath_).dir();
 		auto pypath = dir.absolutePath() + "/geonodes.py";
-		return pypath;*/
-		return tr("D:/Unigine projects/BGN/source/GeometryNodesPlugin/geonodes.py");
+		return pypath;
+		//return tr("D:/Unigine projects/BGN/source/GeometryNodesPlugin/geonodes.py");
 	}
 
 	bool GeometryNodesPlugin::init()
@@ -51,6 +52,8 @@ namespace GeometryNodes
 			if (w == window)
 				destroy_window();
 		});
+
+		connect(Editor::AssetManager::instance(), &Editor::AssetManager::changed, this, &GeometryNodesPlugin::onAssetChanged);
 
 		Unigine::ComponentSystem::get()->initialize();
 
@@ -81,6 +84,7 @@ namespace GeometryNodes
 		Unigine::Console::removeCommand(TRACK_TRANSFORM_CMD);
 
 		disconnect(Editor::WindowManager::instance(), nullptr, this, nullptr);
+		disconnect(Editor::AssetManager::instance(), nullptr, this, nullptr);
 
 		delete action_;
 		action_ = nullptr;
@@ -189,6 +193,22 @@ namespace GeometryNodes
 		if (window)
 		{
 			window->updateParamsGui(comp);
+		}
+	}
+
+	void GeometryNodesPlugin::onAssetChanged(Unigine::UGUID guid)
+	{
+		Unigine::Vector<Unigine::NodePtr> nodes;
+		Unigine::World::getNodes(nodes);
+		for (auto& n : nodes)
+		{
+			Unigine::Vector<BlendAsset*> comps;
+			Unigine::ComponentSystem::get()->getComponents<BlendAsset>(n, comps);
+			for (auto c : comps)
+			{
+				if (c->blend_asset.getParameter()->getValueGUID() == guid)
+					c->assetUpdated();
+			}
 		}
 	}
 

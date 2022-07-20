@@ -47,11 +47,14 @@ namespace GeometryNodes
 	void BlendAsset::on_enable()
 	{
 		Log::message("component enabled\n");
+		init();
 	}
 
 	void BlendAsset::on_disable()
 	{
 		Log::message("component disabled\n");
+		serializeParameters();
+		shutdown();
 	}
 
 	void BlendAsset::update()
@@ -506,7 +509,7 @@ namespace GeometryNodes
 						group->setShowInEditorEnabledRecursive(true);
 						group->setSaveToWorldEnabledRecursive(true);
 						instances.append(ins.hash, group);
-						return;
+						continue;
 					}
 				}
 				else
@@ -531,7 +534,7 @@ namespace GeometryNodes
 					group->setShowInEditorEnabledRecursive(true);
 					group->setSaveToWorldEnabledRecursive(true);
 					instances.append(ins.hash, group);
-					return;
+					continue;
 				}
 			}
 			else
@@ -585,8 +588,31 @@ namespace GeometryNodes
 				{
 					ObjectMeshClusterPtr cl = static_ptr_cast<ObjectMeshCluster>(instance_node);
 					cl->clearMeshes();
+
+					BodyPtr bd;
+					Math::BoundBox bb;
+					if (params && params->generate_body.get())
+					{
+						bd = cl->getBody();
+						if (!bd || bd->getType() != Body::BODY_DUMMY)
+						{
+							bd = BodyDummy::create();
+							cl->setBody(bd);
+						}
+						bd->clearShapes(1);
+
+						MeshPtr clm = Mesh::create();
+						cl->getMesh(clm);
+						bb = clm->getBoundBox();
+					}
+
 					for (int im = 0; im < ins.matrices.size(); im++)
 					{
+						if (bd)
+						{
+							ShapeBoxPtr sh = ShapeBox::create(bd, bb.getSize());
+							sh->setBodyShapeTransform(ins.matrices[im] * Math::translate(bb.getCenter()));
+						}
 						ins.matrices[im] = cl->getWorldTransform() * ins.matrices[im];
 					}
 
@@ -640,7 +666,7 @@ namespace GeometryNodes
 
 		clearTemporaryMeshes();
 
-		auto saveUniqueMesh = [&](String name, MeshPtr m)
+		/*auto saveUniqueMesh = [&](String name, MeshPtr m)
 		{
 			auto meshPath = getUniqueFilePath(getLocalPath(String::joinPaths("meshes", String(name) + ".mesh")));
 			if (m->save(meshPath.get()))
@@ -655,9 +681,9 @@ namespace GeometryNodes
 				Log::message("saving %s failed\n", meshPath.basename().get());
 				return String();
 			}
-		};
+		};*/
 
-		auto saveMesh = [&](NodePtr mesh_node, bool overwrite)
+		/*auto saveMesh = [&](NodePtr mesh_node, bool overwrite)
 		{
 			if (mesh_node.isNull()) { return; }
 			auto m = getMesh(mesh_node);
@@ -697,7 +723,7 @@ namespace GeometryNodes
 				String path = saveUniqueMesh(String(mesh_node->getName()), m.first);
 				setMeshName(mesh_node, path);
 			}
-		};
+		};*/
 
 		if (update_existing && !mesh_update_object.isEmpty())
 		{
@@ -732,6 +758,65 @@ namespace GeometryNodes
 		}
 		saveData("temp_meshes", js);
 		serializeParameters();
+	}
+
+	String BlendAsset::saveUniqueMesh(String name, MeshPtr m)
+	{
+		auto meshPath = getUniqueFilePath(getLocalPath(String::joinPaths("meshes", String(name) + ".mesh")));
+		if (m->save(meshPath.get()))
+		{
+			Log::message("saved %s\n", meshPath.basename().get());
+			auto guid = FileSystem::getGUID("asset://" + meshPath);
+			temporaryMeshes.append(guid);
+			return String(guid.getFileSystemString());
+		}
+		else
+		{
+			Log::message("saving %s failed\n", meshPath.basename().get());
+			return String();
+		}
+	}
+
+	void BlendAsset::saveMesh(NodePtr mesh_node, bool overwrite)
+	{
+		if (mesh_node.isNull()) { return; }
+		auto m = getMesh(mesh_node);
+		if (m.first.isNull()) { return; }
+
+		m.first->optimizeIndices(Mesh::VERTEX_CACHE);
+		setMesh(mesh_node, m.first);
+
+		if (overwrite && m.second.size() > 0)
+		{
+			auto guid = FileSystem::getGUID(m.second.get());
+			auto alias = FileSystemAssets::getRuntimeAlias(guid);
+			if (strlen(alias) > 0)
+			{
+				// can't overwrite mesh inside fbx, so create new
+				auto asset = String::filename(alias);
+				String path = saveUniqueMesh(asset, m.first);
+				setMeshName(mesh_node, path);
+			}
+			else
+			{
+				// mesh asset
+				auto meshPath = FileSystem::getVirtualPath(guid);
+				if (m.first->save(meshPath.get()))
+				{
+					Log::message("saved %s\n", meshPath.basename().get());
+				}
+				else
+				{
+					Log::message("saving %s failed\n", meshPath.basename().get());
+				}
+			}
+		}
+		else
+		{
+			// save to blend folder
+			String path = saveUniqueMesh(String(mesh_node->getName()), m.first);
+			setMeshName(mesh_node, path);
+		}
 	}
 
 	void BlendAsset::saveData(const char* key, QJsonArray subtree)

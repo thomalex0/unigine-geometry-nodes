@@ -40,6 +40,7 @@ namespace GeometryNodes
 			PROP_PARAM(Toggle, replace_transforms, true, "", "", "", "action=0")
 			PROP_PARAM(Toggle, replace_mesh, false, "", "", "", "action=0")
 			PROP_PARAM(Switch, save_mesh, 0, "Create New Mesh Asset,Overwrite Used Mesh Asset", "", "", "", "replace_mesh=1;action=0")
+			PROP_PARAM(Toggle, generate_body, false, "", "Generate Dummy Body and shapes by the bounding box", "", "action=0")
 			PROP_PARAM(File, node_asset, "", "", "", "", "action=2;filter=.node")
 		};
 			PROP_ARRAY_STRUCT(ClusterUpdateParams, instance_objects, "Instances", "", "Output", "update_existing=1")
@@ -51,6 +52,14 @@ namespace GeometryNodes
 		void updateParameter(Unigine::String id, QVariant val);
 		bool skipFrame() { return playback.get() != 1; }
 		void shutdown();
+		void assetUpdated()
+		{
+			if (isEnabled())
+			{
+				serializeParameters();
+				onAssetChanged();
+			}
+		}
 
 	protected:
 		void init();
@@ -78,6 +87,8 @@ namespace GeometryNodes
 
 		void clearTemporaryMeshes();
 		void saveTemporaryMeshes();
+		Unigine::String saveUniqueMesh(Unigine::String name, Unigine::MeshPtr m);
+		void saveMesh(Unigine::NodePtr mesh_node, bool overwrite);
 
 		void subscribeToNodeChanges(int nodeid, int param);
 		void unsubscribeFromNodeChanges(int param);
