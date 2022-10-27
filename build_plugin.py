@@ -15,7 +15,7 @@ if _platform.startswith("linux"):
     is_linux = True
 elif _platform.startswith("windows"):
     _platform = "windows"
-    _cmake_gen = " -G \"Visual Studio 15 2017 Win64\""
+    _cmake_gen = " -G \"Visual Studio 16 2019\""
     is_windows = True
 else:
     sys.exit("Unknown platform")
