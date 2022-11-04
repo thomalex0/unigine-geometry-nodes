@@ -18,18 +18,18 @@ https://youtu.be/irP0aW7qyJA
 > It can be possibly achieved via baking (to VATs or custom format), this is open for discussion.
 
 ### Requirements
-* [UNIGINE 2.15.1](https://unigine.com/get-unigine/) (any SDK edition).
-* [Blender 3.0+](https://blender.org);
+* [UNIGINE 2.15.1](https://unigine.com/get-unigine/) (any SDK edition);
+* [Blender 3.0+](https://blender.org).
 
 ## Install
 
-**Download here: [v0.0.1](https://github.com/thomalex0/unigine-geometry-nodes/releases/latest)**
+**Download here: [v0.0.2](https://github.com/thomalex0/unigine-geometry-nodes/releases/latest)**
 
-You only need to place the content of the `bin` folder of this repo to the `bin` folder of your project based on UNIGINE 2.15.1.
+You only need to place the content of the `bin` folder of this repo to the `bin` folder of your project based on UNIGINE 2.15.1. Only **Float** projects are supported at the moment.
 
 ![copy files to the bin folder](/assets/copy.jpg)
 
-Now you can launch the editor and check if the plugin is loaded.
+Now you can launch the editor and check if the plugin is loaded by opening the **Tools -> Geometry Nodes** window.
 
 ## How to use
 
@@ -51,6 +51,7 @@ Then assign a *\*.blend* asset in the property parameters.
 > * Each `BlendAsset` runs a separate Blender instance.
 > * Currently, only imported blends are supported.
 > * Only a **single** object with a **Geometry Nodes modifier** will be used.
+> * First two UV Maps, as well as `UV0` and `UV1` face corner attributes, are converted to the 1st and 2nd UV channels.
 
 If everything's fine, you'll see new generated child nodes:
 
@@ -104,17 +105,22 @@ Simply save the world and all needed *.mesh* assets will be created in a *.blend
 
 At that, the previously used *.mesh* assets will be deleted only if **Clear Unused Meshes** is enabled.
 
-You can simply disable the `BlendAsset` property to disable logic and keep the intermediate result that can be changed later. Make sure that you saved the world first (to save actual meshes) and then disabled the property.
+You can simply disable the `BlendAsset` property to disable logic and keep the intermediate result that can be changed later. Make sure that you saved the world first (to save actual meshes) and then disabled the property. When the property or the node with it is disabled, the background Blender instance is also shut down.
 
 If you are satisfied with the result, you can simply delete the property from the node. Later, when you assign the property with the same *.blend* asset, all geometry nodes parameters will be restored for convenience.
 
-> **Note**. It's not recommended to delete nodes with the `BlendAsset` property assigned as the plugin won't clear subscriptions and the editor will crash on exit. Instead, it's better to delete the property first. This is actually not a problem, anyway, it is just a prototype.
+<!-- > **Note**. It's not recommended to delete nodes with the `BlendAsset` property assigned as the plugin won't clear subscriptions and the editor will crash on exit. Instead, it's better to delete the property first. This is actually not a problem, anyway, it is just a prototype. -->
 
 ### Update Existing Nodes
 
-Enable `Update Existing` to assign geometry to specified existing nodes and overwrite their mesh assets (opional).
+Enable the `Advanced` flag to override geometry output to the specified existing nodes.
 
-Writing to Landscape Layer Maps is not supported.
+There are 3 modes for instances:
+* **Update Node** - overwrite the mesh (for [mesh-based nodes](#object-parameters)) and/or instance transformations (for Mesh Clusters) for the specified node. Here you can also opt in generation of Box collision shapes.
+* **Clone Node** - clone the specified node with transformations of instances.
+* **Spawn Node Reference** - spawn the specified node reference with transformations of instances.
+
+Writing to Landscape Layer Maps is not supported (yet).
 
 ### Animation
 
@@ -122,7 +128,7 @@ Use the `Playback` setting to switch between the static/single frame/animation m
 
 The animation is only for preview as it's not realtime. However, you can enable the `Synchronous` option to force wait for each frame update, for example, if you want to grab a video sequence.
 
-Enable `Dynamic Instances` if their geometry changes each frame.
+Geometry for instances is cached when obtained for the first time. Enable `Dynamic Instances` if instances should have geometry changing each frame.
 
 ## Limitations and peculiarities
 
@@ -130,17 +136,21 @@ Enable `Dynamic Instances` if their geometry changes each frame.
 * Only one object with **Geometry Nodes** modifier is supported.
 * If your node group expects input curve geometry and outputs meshes and/or instances, there may be strange buggy results. May be fixed in the future. Currently, it's just easier to assign the node group to a mesh object and refer to a curve via an *Object* parameter.
 * Instances of Mesh Clusters/Clutters are supported only as collections.
-* By default, the plugin tracks changes in transformation of nodes specified for *Object* and *Collection* parameters by creating a special invisible NodeTrigger node. If you clone such a node, you'll see that the copy has an unwanted child trigger (safe to delete). If you don't want such behaviour by sacrificing the auto transform tracking, set the `bgn_track_transforms` console value to **0**.
+* By default, the plugin tracks changes in transformation of nodes specified for *Object* and *Collection* parameters by creating a special invisible NodeTrigger. If you clone such a node, you'll see that the copy has an unwanted child trigger (safe to delete). If you don't want such behaviour, set the `bgn_track_transforms` console value to **0** by sacrificing the auto transform tracking.
 
 ## Roadmap
 
 * Video tutorials, if needed;
+* 2.16 support;
 * Refactoring and stabilizing;
 * Speedup data exchange;
 * Implement writing to Landscape Layer Maps;
+* Retrieving spline data from Blender
 * Resolution settings for Landscape Layer Maps and curves;
 * External *.blend* files;
 * Textures import (procedural as well);
+* Convenient config UI;
+* Support for launching Blender in the normal mode;
 * Finding appropriate use cases;
 * Figure out ways to support realtime apps (VATs, alembic, custom logic?);
 * What else?
@@ -155,3 +165,5 @@ For updates see [twitter](https://twitter.com/alexfomenk0) or UNIGINE Discord ch
 And, yeah:
 
 ![ACKCHYUALLY You can do this without addons](/assets/gigachad.png)
+
+### **Any feedback is much appreciated!**
