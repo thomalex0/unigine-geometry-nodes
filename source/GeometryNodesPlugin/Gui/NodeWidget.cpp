@@ -135,7 +135,7 @@ namespace GeometryNodes
 	{
 		if (id == -1 || id == 0) { return; }
 
-		const Unigine::NodePtr node = Unigine::World::getNodeById(id);
+		const Unigine::NodePtr node = Unigine::World::getNodeByID(id);
 		if (node)
 		{
 			node_ = id;

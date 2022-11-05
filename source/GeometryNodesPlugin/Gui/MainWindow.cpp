@@ -7,10 +7,10 @@
 #include "ColorWidget.h"
 
 //#include <UnigineVector.h>
-#include <editor/Selection.h>
-#include <editor/Selector.h>
-#include <editor/ViewportManager.h>
-#include <editor/WindowManager.h>
+#include <editor/UnigineSelection.h>
+#include <editor/UnigineSelector.h>
+#include <editor/UnigineViewportManager.h>
+#include <editor/UnigineWindowManager.h>
 //
 //#include <QHBoxLayout>
 #include <QCheckBox>
@@ -37,14 +37,14 @@ namespace GeometryNodes
 		hideUpdate();
 
 		locker = new LockButton(this);
-		Editor::WindowManager::addCornerWidget(this, locker);
+		UnigineEditor::WindowManager::addCornerWidget(this, locker);
 
 		//debounce_timer = new QTimer(this);
 		//debounce_timer->setSingleShot(true);
 
 		onSelectionChanged();
 
-		connect(Editor::Selection::instance(), &Editor::Selection::changed, this, &MainWindow::onSelectionChanged);
+		connect(UnigineEditor::Selection::instance(), &UnigineEditor::Selection::changed, this, &MainWindow::onSelectionChanged);
 		connect(locker, &LockButton::toggled, this, [&](bool v)
 		{
 			if (!v)
@@ -58,7 +58,7 @@ namespace GeometryNodes
 
 		disconnect(assign_button, nullptr, this, nullptr);
 		//disconnect(debounce_timer, nullptr, this, nullptr);
-		disconnect(Editor::Selection::instance(), nullptr, this, nullptr);
+		disconnect(UnigineEditor::Selection::instance(), nullptr, this, nullptr);
 
 		delete assign_button;
 		assign_button = nullptr;
@@ -310,7 +310,7 @@ namespace GeometryNodes
 
 	void MainWindow::assign_component()
 	{
-		Editor::SelectorNodes* selector = Editor::Selection::getSelectorNodes();
+		UnigineEditor::SelectorNodes* selector = UnigineEditor::Selection::getSelectorNodes();
 		if (selector && selector->size())
 		{
 			for (const Unigine::NodePtr& node : selector->getNodes())
@@ -326,7 +326,7 @@ namespace GeometryNodes
 		{
 			Unigine::NodePtr d = Unigine::NodeDummy::create();
 			Unigine::ComponentSystem::get()->addComponent<BlendAsset>(d);
-			Editor::ViewportManager::placeNode(d);
+			UnigineEditor::ViewportManager::placeNode(d);
 		}
 	}
 
@@ -352,7 +352,7 @@ namespace GeometryNodes
 			assign_button->show();
 			hint_label->show();
 			scroll_area->hide();
-			Editor::SelectorNodes* selector = Editor::Selection::getSelectorNodes();
+			UnigineEditor::SelectorNodes* selector = UnigineEditor::Selection::getSelectorNodes();
 			if (selector && selector->size())
 			{
 				assign_button->setText(tr("Assign to Selection"));
@@ -370,7 +370,7 @@ namespace GeometryNodes
 	void MainWindow::update_current_component()
 	{
 		BlendAsset* comp{};
-		Editor::SelectorNodes* selector = Editor::Selection::getSelectorNodes();
+		UnigineEditor::SelectorNodes* selector = UnigineEditor::Selection::getSelectorNodes();
 		if (selector && selector->size() == 1)
 		{
 			comp = Unigine::ComponentSystem::get()->getComponent<BlendAsset>(selector->getNodes()[0]);

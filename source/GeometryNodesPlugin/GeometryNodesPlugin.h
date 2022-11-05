@@ -2,10 +2,13 @@
 
 #include "BlendAsset.h"
 #include "Gui/MainWindow.h"
+#include "utils/CallbackGuard.h"
 
-#include <editor/Plugin.h>
-#include <editor/PluginInfo.h>
-#include <editor/PluginManager.h>
+#include <UnigineVector.h>
+
+#include <editor/UniginePlugin.h>
+#include <editor/UniginePluginInfo.h>
+#include <editor/UniginePluginManager.h>
 
 class QAction;
 
@@ -17,11 +20,11 @@ namespace GeometryNodes
 
 	class GeometryNodesPlugin final
 		: public QObject
-		, public ::Editor::Plugin
+		, public ::UnigineEditor::Plugin
 	{
 		Q_OBJECT
 			Q_PLUGIN_METADATA(IID "com.unigine.EditorPlugin" FILE "GeometryNodesPlugin.json")
-			Q_INTERFACES(Editor::Plugin)
+			Q_INTERFACES(UnigineEditor::Plugin)
 
 	public:
 
@@ -36,13 +39,11 @@ namespace GeometryNodes
 		void paramsUpdated(BlendAsset* comp);
 		void meshUpdated();
 
-	public slots:
-		void onAssetChanged(Unigine::UGUID guid);
-
 	private:
 		void setup_config();
 		void create_window();
 		void destroy_window();
+		void onAssetChanged(const char *path);
 
 		QAction* action_{};
 		MainWindow* window{};
@@ -50,6 +51,7 @@ namespace GeometryNodes
 		QString blenderPath_;
 		bool trackTransform_{ true };
 
+		Unigine::Vector<CallbackGuardUPtr> callbacks_;
 		static GeometryNodesPlugin* instance_;
 	};
 } // namespace GeometryNodes

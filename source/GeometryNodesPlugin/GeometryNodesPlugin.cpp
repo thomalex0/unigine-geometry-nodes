@@ -4,14 +4,14 @@
 #include <UnigineConsole.h>
 
 //#include <editor/Actions.h>
-#include <editor/Constants.h>
+#include <editor/UnigineConstants.h>
 //#include <editor/Selection.h>
 //#include <editor/Selector.h>
-#include <editor/AssetManager.h>
-#include <editor/WindowManager.h>
+#include <editor/UnigineAssetManager.h>
+#include <editor/UnigineWindowManager.h>
 //#include <editor/PluginManager.h>
-#include <editor/SettingManager.h>
-#include <editor/Undo.h>
+#include <editor/UnigineSettingManager.h>
+#include <editor/UnigineUndo.h>
 //
 #include <QMenu>
 //#include <QCoreApplication>
@@ -39,12 +39,15 @@ namespace GeometryNodes
 
 	bool GeometryNodesPlugin::init()
 	{
+		using std::make_unique;
+		//using GeometryNodes::CallbackGuard;
+
 		instance_ = this;
 
 		setup_config();
 
-		using Editor::WindowManager;
-		QMenu* menu = WindowManager::findMenu(Constants::MM_TOOLS);
+		using UnigineEditor::WindowManager;
+		QMenu* menu = WindowManager::findMenu(UnigineEditor::Constants::MM_TOOLS);
 		action_ = menu->addAction("Geometry Nodes Plugin", this,
 			&GeometryNodesPlugin::create_window);
 
@@ -53,8 +56,10 @@ namespace GeometryNodes
 				destroy_window();
 		});
 
-		connect(Editor::AssetManager::instance(), &Editor::AssetManager::changed, this, &GeometryNodesPlugin::onAssetChanged);
-
+		//connect(UnigineEditor::AssetManager::instance(), &UnigineEditor::AssetManager::changed, this, &GeometryNodesPlugin::onAssetChanged);
+		callbacks_.push_back(make_unique<CallbackGuard>(
+			UnigineEditor::AssetManager::addAssetChangedCallback(Unigine::MakeCallback(this, &GeometryNodesPlugin::onAssetChanged)),
+				[](void* p) { UnigineEditor::AssetManager::removeAssetChangedCallback(p); }));
 		Unigine::ComponentSystem::get()->initialize();
 
 		return true;
@@ -79,12 +84,13 @@ namespace GeometryNodes
 			}
 		}
 
+		callbacks_.clear();
+
 		Unigine::Console::removeCommand(BLENDER_PATH_CFG);
 		Unigine::Console::removeCommand(BLENDER_FIND_CMD);
 		Unigine::Console::removeCommand(TRACK_TRANSFORM_CMD);
 
-		disconnect(Editor::WindowManager::instance(), nullptr, this, nullptr);
-		disconnect(Editor::AssetManager::instance(), nullptr, this, nullptr);
+		disconnect(UnigineEditor::WindowManager::instance(), nullptr, this, nullptr);
 
 		delete action_;
 		action_ = nullptr;
@@ -98,7 +104,7 @@ namespace GeometryNodes
 
 	void GeometryNodesPlugin::setup_config()
 	{
-		auto plugins = Editor::PluginManager::plugins();
+		auto plugins = UnigineEditor::PluginManager::plugins();
 		for (auto info : plugins)
 		{
 			if (strcmp(info->name(), "GeometryNodesPlugin") == 0)
@@ -107,8 +113,8 @@ namespace GeometryNodes
 			}
 		}
 
-		using Editor::SettingManager;
-		if (!SettingManager::userSettings().contains(BLENDER_PATH_CFG))
+		using UnigineEditor::SettingManager;
+		if (!SettingManager::userSettings()->contains(BLENDER_PATH_CFG))
 		{
 			const char* path = "blender";
 			QString versions[] = { "3.3", "3.2", "3.1", "3.0" };
@@ -121,12 +127,12 @@ namespace GeometryNodes
 					break;
 				}
 			}
-			SettingManager::userSettings().setString(BLENDER_PATH_CFG, path);
+			SettingManager::userSettings()->setString(BLENDER_PATH_CFG, path);
 			blenderPath_ = tr(path);
 		}
 		else
 		{
-			blenderPath_ = SettingManager::userSettings().getString(BLENDER_PATH_CFG);
+			blenderPath_ = SettingManager::userSettings()->getString(BLENDER_PATH_CFG);
 		}
 
 		Unigine::Console::addCommand(BLENDER_PATH_CFG, "Path to Blender executable (or just 'blender' if it's in your PATH).", Unigine::MakeCallback([this](int argc, char** argv) {
@@ -136,7 +142,7 @@ namespace GeometryNodes
 			}
 			else if (argc == 2)
 			{
-				SettingManager::userSettings().setString(BLENDER_PATH_CFG, argv[1]);
+				SettingManager::userSettings()->setString(BLENDER_PATH_CFG, argv[1]);
 				blenderPath_ = tr(argv[1]);
 			}
 		}));
@@ -147,7 +153,7 @@ namespace GeometryNodes
 			if (!fileName.isEmpty())
 			{
 				auto path = fileName.toUtf8().constData();
-				SettingManager::userSettings().setString(BLENDER_PATH_CFG, path);
+				SettingManager::userSettings()->setString(BLENDER_PATH_CFG, path);
 				blenderPath_ = tr(path);
 				Unigine::Log::message("set to:\n%s\n", path);
 			}
@@ -170,14 +176,14 @@ namespace GeometryNodes
 	{
 		if (window)
 		{
-			Editor::WindowManager::show(window);
+			UnigineEditor::WindowManager::show(window);
 			return;
 		}
 
 		window = new MainWindow;
 
-		Editor::WindowManager::add(window, Editor::WindowManager::LAST_USED_AREA);
-		Editor::WindowManager::show(window);
+		UnigineEditor::WindowManager::add(window, UnigineEditor::WindowManager::LAST_USED_AREA);
+		UnigineEditor::WindowManager::show(window);
 	}
 
 	void GeometryNodesPlugin::meshUpdated()
@@ -196,8 +202,9 @@ namespace GeometryNodes
 		}
 	}
 
-	void GeometryNodesPlugin::onAssetChanged(Unigine::UGUID guid)
+	void GeometryNodesPlugin::onAssetChanged(const char *path)
 	{
+		Unigine::UGUID guid = UnigineEditor::AssetManager::getAssetGUIDFromPath(path);
 		Unigine::Vector<Unigine::NodePtr> nodes;
 		Unigine::World::getNodes(nodes);
 		for (auto& n : nodes)
@@ -217,7 +224,7 @@ namespace GeometryNodes
 		if (window)
 		{
 			disconnect(window, nullptr, this, nullptr);
-			Editor::WindowManager::remove(window);
+			UnigineEditor::WindowManager::remove(window);
 			delete window;
 			window = nullptr;
 		}

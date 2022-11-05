@@ -475,7 +475,7 @@ namespace GeometryNodes
 		if (geoNodeId > 0)
 		{
 			data.transform = node->getWorldTransform();
-			Unigine::NodePtr geoNode = Unigine::World::getNodeById(geoNodeId);
+			Unigine::NodePtr geoNode = Unigine::World::getNodeByID(geoNodeId);
 			if (!geoNode.isNull())
 			{
 				// getting the world matrix relative to the main node
@@ -1266,19 +1266,19 @@ namespace GeometryNodes
 			break;
 		case GNParam::Type::GEOMETRY:
 		{
-			Unigine::NodePtr node = Unigine::World::getNodeById(p.value.toInt());
+			Unigine::NodePtr node = Unigine::World::getNodeByID(p.value.toInt());
 			out << getGeometryData(node);
 		}
 		break;
 		case GNParam::Type::OBJECT:
 		{
-			Unigine::NodePtr node = Unigine::World::getNodeById(p.value.toInt());
+			Unigine::NodePtr node = Unigine::World::getNodeByID(p.value.toInt());
 			out << getGeometryData(node, p.geoNode);
 		}
 		break;
 		case GNParam::Type::COLLECTION:
 		{
-			Unigine::NodePtr node = Unigine::World::getNodeById(p.value.toInt());
+			Unigine::NodePtr node = Unigine::World::getNodeByID(p.value.toInt());
 			Unigine::Vector<GNData> data;
 			if (node)
 			{

@@ -22,6 +22,7 @@
 !source/GeometryNodesPlugin/*.h
 !source/GeometryNodesPlugin/*.cpp
 !source/GeometryNodesPlugin/Gui
+!source/GeometryNodesPlugin/utils
 !source/GeometryNodesPlugin/geonodes.py
 !source/GeometryNodesPlugin/*.json
 !source/GeometryNodesPlugin/CMakeLists.txt

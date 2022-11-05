@@ -187,7 +187,8 @@ namespace GeometryNodes
 		}
 
 		gnParams.clear();
-		GeometryNodesPlugin::get()->paramsUpdated(this);
+		if(GeometryNodesPlugin::get())
+			GeometryNodesPlugin::get()->paramsUpdated(this);
 
 		if (process)
 		{
@@ -316,7 +317,7 @@ namespace GeometryNodes
 		int ndid = gnParams[param].value.toInt();
 		if (ndid > 0)
 		{
-			NodePtr nd = World::getNodeById(ndid);
+			NodePtr nd = World::getNodeByID(ndid);
 			if (!nd.isNull())
 			{
 				if (nd->getType() == Node::WORLD_SPLINE_GRAPH)
@@ -343,7 +344,7 @@ namespace GeometryNodes
 	{
 		if (nodeid > 0 && GeometryNodesPlugin::get()->isTrackTransform())
 		{
-			NodePtr nd = World::getNodeById(nodeid);
+			NodePtr nd = World::getNodeByID(nodeid);
 			if (!nd.isNull())
 			{
 				if (nd->getType() == Node::WORLD_SPLINE_GRAPH)
@@ -844,6 +845,7 @@ namespace GeometryNodes
 
 	bool BlendAsset::deserializeParameters()
 	{
+		// TODO: filter blendasset
 		QJsonArray json_params = getSavedData("params");
 		if (json_params.size() > 0)
 		{
@@ -873,6 +875,7 @@ namespace GeometryNodes
 
 	void BlendAsset::serializeParameters()
 	{
+		// TODO: add blendasset
 		QJsonArray jpar;
 		for (auto& param : gnParams)
 		{

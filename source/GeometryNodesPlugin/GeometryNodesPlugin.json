@@ -1,8 +1,8 @@
 {
   "Name": "GeometryNodesPlugin",
   "Vendor": "Thomalex",
-  "Description": "<p>A plugin for UNIGINE Editor 2.15.1 utilizing Blender Geometry Nodes functionality for procedural geometry.</p>",
-  "Version": "0.0.2.0",
+  "Description": "<p>A plugin for UNIGINE Editor 2.16 utilizing Blender Geometry Nodes functionality for procedural geometry.</p>",
+  "Version": "0.0.2.1",
   "CompatVersion": "0.0.2.0",
   "Dependencies": []
 }
