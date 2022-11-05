@@ -20,7 +20,7 @@ set(CMAKE_AUTORCC TRUE)
 ##==============================================================================
 ## Environment.
 ##==============================================================================
-set(UNIGINE_DOUBLE TRUE)
+set(UNIGINE_DOUBLE FALSE)
 set(UNIGINE_SDK_PATH ${PROJECT_SOURCE_DIR}/../../)
 set(UNIGINE_BIN_DIR ${UNIGINE_SDK_PATH}bin/)
 set(UNIGINE_LIB_DIR ${UNIGINE_SDK_PATH}lib/)
