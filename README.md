@@ -2,7 +2,7 @@
 
 **WORK-IN-PROGRESS**
 
-[![UNIGINE 2.15.1](https://img.shields.io/badge/UNIGINE-2.15.1-green.svg)](https://developer.unigine.com/en/docs/2.15.1/)
+[![UNIGINE 2.16](https://img.shields.io/badge/UNIGINE-2.16-green.svg)](https://developer.unigine.com/en/docs/2.16/)
 
 ![Geometry Nodes Plugin](/assets/title.jpg)
 
@@ -18,14 +18,16 @@ https://youtu.be/irP0aW7qyJA
 > It can be possibly achieved via baking (to VATs or custom format), this is open for discussion.
 
 ### Requirements
-* [UNIGINE 2.15.1](https://unigine.com/get-unigine/) (any SDK edition);
+* [UNIGINE 2.16](https://unigine.com/get-unigine/) (any SDK edition);
 * [Blender 3.0+](https://blender.org).
 
 ## Install
 
-**Download here: [v0.0.2](https://github.com/thomalex0/unigine-geometry-nodes/releases/latest)**
+**Download here: [v0.0.2.1](https://github.com/thomalex0/unigine-geometry-nodes/releases/latest) for UNIGINE 2.16**;
 
-You only need to place the content of the `bin` folder of this repo to the `bin` folder of your project based on UNIGINE 2.15.1. Only **Float** projects are supported at the moment.
+**Download here: [v0.0.2](https://github.com/thomalex0/unigine-geometry-nodes/releases/tag/v0.0.2) for UNIGINE 2.15.1**.
+
+You only need to place the content of the `bin` folder of this repo to the `bin` folder of your project based on UNIGINE 2.16. Both **Float** and **Double** projects are supported - you need to install the corresponding package.
 
 ![copy files to the bin folder](/assets/copy.jpg)
 
@@ -140,20 +142,20 @@ Geometry for instances is cached when obtained for the first time. Enable `Dynam
 
 ## Roadmap
 
-* Video tutorials, if needed;
-* 2.16 support;
-* Refactoring and stabilizing;
-* Speedup data exchange;
-* Implement writing to Landscape Layer Maps;
-* Retrieving spline data from Blender
-* Resolution settings for Landscape Layer Maps and curves;
-* External *.blend* files;
-* Textures import (procedural as well);
-* Convenient config UI;
-* Support for launching Blender in the normal mode;
-* Finding appropriate use cases;
-* Figure out ways to support realtime apps (VATs, alembic, custom logic?);
-* What else?
+- [x] 2.16 support;
+- [ ] Video tutorials, if needed;
+- [ ] Refactoring and stabilizing;
+- [ ] Speedup data exchange;
+- [ ] Implement writing to Landscape Layer Maps;
+- [ ] Retrieving spline data from Blender
+- [ ] Resolution settings for Landscape Layer Maps and curves;
+- [ ] External *.blend* files;
+- [ ] Textures import (procedural as well);
+- [ ] Convenient config UI;
+- [ ] Support for launching Blender in the normal mode;
+- [ ] Finding appropriate use cases;
+- [ ] Figure out ways to support realtime apps (VATs, alembic, custom logic?);
+- [ ] What else?
 
 ## License
 [MIT](LICENSE).
