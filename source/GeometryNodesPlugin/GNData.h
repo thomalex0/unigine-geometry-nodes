@@ -343,7 +343,7 @@ namespace GeometryNodes
 	{
 		Unigine::Math::ivec2 resolution{ 256, 256 };
 		int max_fetchers = 256;
-		Unigine::Vector<Unigine::Math::vec2> fetch_positions;
+		Unigine::Vector<Unigine::Math::Vec2> fetch_positions;
 		Unigine::Vector<float> fetch_data;
 		int fishined_fetch_count{ 0 };
 		int next_fetch_index{ 0 };
@@ -355,20 +355,20 @@ namespace GeometryNodes
 		};
 		Unigine::Vector<Fetcher> fetchers;
 
-		Unigine::Math::vec2 size = node->getSize();
-		Unigine::Math::mat4 transform = node->getWorldTransform() * Unigine::Math::scale(size.x * 0.99f, size.y * 0.99f, 1.0f);
-		Unigine::Math::vec3 bottom_left = transform * Unigine::Math::vec3(0.005f, 0.005f, 0.0f);
+		Unigine::Math::Vec2 size = node->getSize();
+		Unigine::Math::Mat4 transform = node->getWorldTransform() * Unigine::Math::Mat4(Unigine::Math::scale(size.x * 0.99f, size.y * 0.99f, static_cast<Unigine::Math::Scalar>(1.0f)));
+		Unigine::Math::Vec3 bottom_left = transform * Unigine::Math::Vec3(0.005f, 0.005f, 0.0f);
 
-		transform.setColumn3(3, Unigine::Math::vec3(0.0f, 0.0f, 0.0f));
-		Unigine::Math::vec3 delta_x = transform * Unigine::Math::vec3(1.0f / resolution.x, 0.0f, 0.0f);
-		Unigine::Math::vec3 delta_y = transform * Unigine::Math::vec3(0.0f, 1.0f / resolution.y, 0.0f);
+		transform.setColumn3(3, Unigine::Math::Vec3(0.0f, 0.0f, 0.0f));
+		Unigine::Math::Vec3 delta_x = transform * Unigine::Math::Vec3(1.0f / resolution.x, 0.0f, 0.0f);
+		Unigine::Math::Vec3 delta_y = transform * Unigine::Math::Vec3(0.0f, 1.0f / resolution.y, 0.0f);
 
 		fetch_positions.clear();
 		for (int i = 0; i <= resolution.y; ++i)
 		{
 			for (int j = 0; j <= resolution.x; ++j)
 			{
-				Unigine::Math::vec3 sample_point = bottom_left + delta_y * static_cast<Unigine::Math::Scalar>(i) + delta_x * static_cast<Unigine::Math::Scalar>(j);
+				Unigine::Math::Vec3 sample_point = bottom_left + delta_y * static_cast<Unigine::Math::Scalar>(i) + delta_x * static_cast<Unigine::Math::Scalar>(j);
 				fetch_positions.push_back(sample_point.xy);
 			}
 		}
@@ -430,9 +430,8 @@ namespace GeometryNodes
 			for (int j = 0; j <= resolution.x; ++j)
 			{
 				float height = fetch_data[(resolution.x + 1) * i + j];
-				const auto& position = Unigine::Math::vec3(Unigine::Math::vec2(fetch_positions[(resolution.x + 1) * i + j]), height);
-
-				s.vertices.append(inverse(node->getWorldTransform()) * position);
+				const auto& position = Unigine::Math::Vec3(fetch_positions[(resolution.x + 1) * i + j], static_cast<Unigine::Math::Scalar>(height));
+				s.vertices.append(static_cast<Unigine::Math::vec3>(Unigine::Math::inverse(node->getWorldTransform()) * position));
 				s.uv0.append(Unigine::Math::vec2((float)j / resolution.x, 1 - (float)i / resolution.y));
 			}
 		}
@@ -474,12 +473,12 @@ namespace GeometryNodes
 
 		if (geoNodeId > 0)
 		{
-			data.transform = node->getWorldTransform();
+			data.transform = static_cast<Unigine::Math::mat4>(node->getWorldTransform());
 			Unigine::NodePtr geoNode = Unigine::World::getNodeByID(geoNodeId);
 			if (!geoNode.isNull())
 			{
 				// getting the world matrix relative to the main node
-				Unigine::Math::mat4 parent = geoNode->getWorldTransform();
+				Unigine::Math::mat4 parent = static_cast<Unigine::Math::mat4>(geoNode->getWorldTransform());
 				data.transform = inverse(parent) * data.transform;
 			}
 		}
@@ -495,7 +494,7 @@ namespace GeometryNodes
 				ins.matrices.reserve(cluster->getNumMeshes());
 				for (int i = 0; i < cluster->getNumMeshes(); i++)
 				{
-					ins.matrices.append(data.transform * cluster->getMeshTransform(i));
+					ins.matrices.append(static_cast<Unigine::Math::mat4>(data.transform) * cluster->getMeshTransform(i));
 				}
 				data.instances.append(ins);
 			}
@@ -514,7 +513,7 @@ namespace GeometryNodes
 				clutter->getClutterTransforms(ins.matrices);
 				for (int i = 0; i < ins.matrices.size(); i++)
 				{
-					ins.matrices[i] = data.transform * ins.matrices[i];
+					ins.matrices[i] = static_cast<Unigine::Math::mat4>(data.transform) * ins.matrices[i];
 				}
 				data.instances.append(ins);
 			}
@@ -537,9 +536,9 @@ namespace GeometryNodes
 					continue;
 				}
 				GNCurveData c;
-				c.start = seg->getStartPoint()->getPosition();
+				c.start = static_cast<Unigine::Math::vec3>(seg->getStartPoint()->getPosition());
 				c.startTangent = c.start + seg->getStartTangent();
-				c.end = seg->getEndPoint()->getPosition();
+				c.end = static_cast<Unigine::Math::vec3>(seg->getEndPoint()->getPosition());
 				c.endTangent = c.end + seg->getEndTangent();
 				data.segments.append(c);
 			}

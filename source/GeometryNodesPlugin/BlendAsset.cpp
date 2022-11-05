@@ -46,13 +46,13 @@ namespace GeometryNodes
 
 	void BlendAsset::on_enable()
 	{
-		Log::message("component enabled\n");
+		//Log::message("component enabled\n");
 		init();
 	}
 
 	void BlendAsset::on_disable()
 	{
-		Log::message("component disabled\n");
+		//Log::message("component disabled\n");
 		serializeParameters();
 		shutdown();
 	}
@@ -370,7 +370,7 @@ namespace GeometryNodes
 				}
 				tr->setShowInEditorEnabled(false);
 				tr->setSaveToWorldEnabled(false);
-				tr->setTransform(Math::mat4_identity);
+				tr->setTransform(Math::Mat4_identity);
 				tr->addPositionCallback(MakeCallback([=](NodeTriggerPtr tr) {
 					if (!node->isEnabled() || !isEnabled()) { return; }
 					process->updateParameter(gnParams[param], getKnownInstances());
@@ -410,7 +410,7 @@ namespace GeometryNodes
 					mesh->setSaveToWorldEnabled(true);
 				}
 
-				mesh->setTransform(data.transform);
+				mesh->setTransform(Math::Mat4(data.transform));
 				mesh->setName(data.mesh.name);
 				//mesh->setMeshName("");
 
@@ -498,14 +498,14 @@ namespace GeometryNodes
 						// clone nodes
 						NodeDummyPtr group = NodeDummy::create();
 						group->setParent(node);
-						group->setTransform(Math::mat4_identity);
+						group->setTransform(Math::Mat4_identity);
 						group->setName(instance_node->getName());
 
 						for (int im = 0; im < ins.matrices.size(); im++)
 						{
 							NodePtr nd = instance_node->clone();
 							nd->setParent(group);
-							nd->setTransform(ins.matrices[im]);
+							nd->setTransform(Math::Mat4(ins.matrices[im]));
 						}
 						group->setShowInEditorEnabledRecursive(true);
 						group->setSaveToWorldEnabledRecursive(true);
@@ -522,14 +522,14 @@ namespace GeometryNodes
 
 					NodeDummyPtr group = NodeDummy::create();
 					group->setParent(node);
-					group->setTransform(Math::mat4_identity);
+					group->setTransform(Math::Mat4_identity);
 					group->setName(name.get());
 
 					for (int im = 0; im < ins.matrices.size(); im++)
 					{
 						NodeReferencePtr nr = NodeReference::create(guid);
 						nr->setParent(group);
-						nr->setTransform(ins.matrices[im]);
+						nr->setTransform(Math::Mat4(ins.matrices[im]));
 						nr->setName(name.get());
 					}
 					group->setShowInEditorEnabledRecursive(true);
@@ -548,7 +548,7 @@ namespace GeometryNodes
 				{
 					ObjectMeshClusterPtr cl = ObjectMeshCluster::create("");
 					cl->setParent(node);
-					cl->setTransform(Math::mat4_identity);
+					cl->setTransform(Math::Mat4_identity);
 					cl->setShowInEditorEnabled(true);
 					cl->setSaveToWorldEnabled(true);
 					instances.append(ins.hash, cl);
@@ -607,6 +607,8 @@ namespace GeometryNodes
 						bb = clm->getBoundBox();
 					}
 
+					Vector<Math::Mat4> wt;
+
 					for (int im = 0; im < ins.matrices.size(); im++)
 					{
 						if (bd)
@@ -614,10 +616,10 @@ namespace GeometryNodes
 							ShapeBoxPtr sh = ShapeBox::create(bd, bb.getSize());
 							sh->setBodyShapeTransform(ins.matrices[im] * Math::translate(bb.getCenter()));
 						}
-						ins.matrices[im] = cl->getWorldTransform() * ins.matrices[im];
+						wt.append(cl->getWorldTransform() * Math::Mat4(ins.matrices[im]));
 					}
 
-					cl->createMeshes(ins.matrices);
+					cl->createMeshes(wt);
 				}
 			}
 		}
